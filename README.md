@@ -31,18 +31,37 @@ function App() {
 
 When `children` changes, characters common to both strings slide into their new positions. New characters fade in, removed characters fade out.
 
-## Custom transitions
+## Variants
 
 ```tsx
-<Calligraph transition={{ type: "spring", stiffness: 200, damping: 20 }}>
+<Calligraph>Text</Calligraph>                  // LCS character diffing
+<Calligraph variant="number">$35.99</Calligraph> // rolling digits
+<Calligraph variant="slots">1204</Calligraph>    // slot-machine spin
+```
+
+## Animation presets
+
+```tsx
+<Calligraph animation="bouncy" trend={1} drift={{ x: 20, y: 8 }}>
   {text}
 </Calligraph>
 ```
+
+Presets: `default`, `smooth`, `snappy`, `bouncy`. Full prop reference in [llms.txt](packages/calligraph/llms-full.txt).
 
 ## Requirements
 
 - React 18+
 - Motion 11+
+
+## AI & agents
+
+The docs are plain markdown, following the [llms.txt convention](https://llmstxt.org):
+
+- [`/llms.txt`](https://calligraph.raphaelsalaja.com/llms.txt) — concise index for assistants.
+- [`/llms-full.txt`](https://calligraph.raphaelsalaja.com/llms-full.txt) — the full documentation in one file (also at [`/index.md`](https://calligraph.raphaelsalaja.com/index.md)).
+- `node_modules/calligraph/llms-full.txt` — the same full documentation ships inside the npm package, so agents can read it straight from your project.
+- [`AGENTS.md`](AGENTS.md) — guides coding agents contributing to this repo.
 
 ## Sponsors
 

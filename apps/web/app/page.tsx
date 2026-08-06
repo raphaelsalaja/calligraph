@@ -9,6 +9,29 @@ const usage = `import { Calligraph } from "calligraph";
 <Calligraph>Text</Calligraph>
 `;
 
+const docs = [
+  {
+    href: "/llms.txt",
+    path: "/llms.txt",
+    description: "Short index for assistants.",
+  },
+  {
+    href: "/llms-full.txt",
+    path: "/llms-full.txt",
+    description: "Every prop, variant and recipe in one file.",
+  },
+  {
+    href: "/index.md",
+    path: "/index.md",
+    description: "The same full docs, as markdown.",
+  },
+  {
+    href: "https://github.com/raphaelsalaja/calligraph/blob/main/AGENTS.md",
+    path: "AGENTS.md",
+    description: "For agents contributing to the repo.",
+  },
+];
+
 export default function Page() {
   return (
     <>
@@ -58,6 +81,42 @@ export default function Page() {
 
       <Section title="Usage">
         <CodeBlock>{usage}</CodeBlock>
+      </Section>
+
+      <Section title="AI & agents">
+        <p className={styles.description}>
+          These docs are plain markdown, following the{" "}
+          <a
+            className={styles.link}
+            href="https://llmstxt.org"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            llms.txt
+          </a>{" "}
+          convention.
+        </p>
+        <table className={styles.table}>
+          <tbody>
+            {docs.map(({ href, path, description }) => (
+              <tr key={path}>
+                <td>
+                  <a className={styles.link} href={href}>
+                    <code>{path}</code>
+                  </a>
+                </td>
+                <td>{description}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <p className={styles.description}>
+          The full docs also ship inside the package, at{" "}
+          <code className={styles.code}>
+            node_modules/calligraph/llms-full.txt
+          </code>
+          .
+        </p>
       </Section>
     </>
   );

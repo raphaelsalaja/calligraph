@@ -1,0 +1,29 @@
+# Calligraph
+
+> Fluid text and number transitions for React, powered by [Motion](https://motion.dev). Shared characters slide to their new positions, entering characters fade in, exiting ones fade out. Numbers roll vertically or spin like a slot machine.
+
+One export, `Calligraph`, plus the `CalligraphProps` type. ESM only. Peer dependencies: `motion >=11`, `react >=18`, `react-dom >=18`.
+
+```tsx
+"use client";
+import { Calligraph } from "calligraph";
+
+<Calligraph>{text}</Calligraph>
+<Calligraph variant="number">{"$35.99"}</Calligraph>
+<Calligraph variant="slots">{"1204"}</Calligraph>
+```
+
+Props: `variant` (`"text" | "number" | "slots"`), `animation` (`"default" | "smooth" | "snappy" | "bouncy"`), `as`, `drift`, `trend`, `stagger`, `initial`, `onComplete`, `autoSize`. There is no `transition` prop. All other `<span>` props pass through to the wrapper.
+
+## Docs
+
+- [Full documentation](https://calligraph.raphaelsalaja.com/llms-full.txt): every prop with defaults, all three variants, recipes, constraints, common mistakes
+- `node_modules/calligraph/llms-full.txt`: the same file, shipped inside the npm package
+- [Markdown mirror](https://calligraph.raphaelsalaja.com/index.md): full documentation with a `.md` extension
+- [AGENTS.md](https://github.com/raphaelsalaja/calligraph/blob/main/AGENTS.md): rules for agents contributing to the repo
+
+## Links
+
+- [npm: calligraph](https://www.npmjs.com/package/calligraph): `npm install calligraph`
+- [Source](https://github.com/raphaelsalaja/calligraph/tree/main/packages/calligraph/src): one renderer file per variant
+- [Live demos](https://calligraph.raphaelsalaja.com), [lab](https://calligraph.raphaelsalaja.com/lab), [compare](https://calligraph.raphaelsalaja.com/compare)

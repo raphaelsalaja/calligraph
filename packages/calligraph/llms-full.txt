@@ -1,0 +1,220 @@
+# Calligraph
+
+> Fluid text and number transitions for React, powered by [Motion](https://motion.dev). Shared characters slide to their new positions, entering characters fade in, exiting ones fade out. Numbers roll vertically or spin like a slot machine.
+
+- Package: `calligraph` (npm, MIT, ESM only, ~20 kB unminified)
+- Docs: https://calligraph.raphaelsalaja.com
+- Repo: https://github.com/raphaelsalaja/calligraph
+- Exports: the `Calligraph` component and the `CalligraphProps` type. Nothing else is public.
+
+## Install
+
+```bash
+npm install calligraph
+# pnpm add calligraph
+# yarn add calligraph
+```
+
+`motion`, `react` and `react-dom` are peer dependencies (`motion >=11`, `react >=18`, `react-dom >=18`). Calligraph bundles nothing but itself and ships no CSS - there is no stylesheet to import.
+
+## Quick start
+
+```tsx
+"use client";
+
+import { Calligraph } from "calligraph";
+import { useState } from "react";
+
+const words = ["Hello", "World", "Calligraph"];
+
+export function Example() {
+  const [index, setIndex] = useState(0);
+
+  return (
+    <button onClick={() => setIndex((i) => (i + 1) % words.length)}>
+      <Calligraph>{words[index]}</Calligraph>
+    </button>
+  );
+}
+```
+
+Every time `children` changes, Calligraph diffs the old string against the new one and animates the difference. You never call an imperative API - render a new string and the animation follows.
+
+## Framework notes
+
+- **Next.js App Router**: `Calligraph` is a client component (`"use client"` is baked into the package). Render it from a client component, or from a server component - importing it from a server component works, but the state that changes the text has to live in a client component.
+- **Vite / CRA / Remix / React Router**: nothing special, just import and render.
+- **Server rendering**: the initial string renders as markup, so there is no layout shift. Animation begins on the first change after hydration (set `initial` to animate the first paint too).
+- **React Server Components**: pass the text as a prop from the server; only the component itself needs to be client-side.
+
+## Props
+
+`CalligraphProps` extends every `<span>` prop (minus `children`), so `className`, `style`, `id`, `onClick`, `aria-*` and friends all pass through to the wrapper element.
+
+| Prop | Type | Default | Notes |
+| --- | --- | --- | --- |
+| `children` | `string \| number` | `""` | The text to render. Coerced with `String()`. Not a React node - plain text only. |
+| `variant` | `"text" \| "number" \| "slots"` | `"text"` | Rendering strategy, see below. |
+| `animation` | `"default" \| "smooth" \| "snappy" \| "bouncy"` | `"default"` (`"snappy"` when `variant="number"`) | Motion transition preset. |
+| `as` | `React.ElementType` | `"span"` | Wrapper element, e.g. `"h1"`, `"div"`, or your own component. |
+| `drift` | `{ x?: number; y?: number }` | `{ x: 15, y: 0 }` | Max spread in px for entering/exiting characters, scaled by how much of the string changed. `variant="text"` only. |
+| `trend` | `1 \| -1 \| 0` | `0` | Vertical direction: `1` enters from below, `-1` from above, `0` none. `variant="text"` only. |
+| `stagger` | `number` | `0.02` | Seconds of delay spread across characters. Applies to `variant="number"` and `variant="slots"`. |
+| `initial` | `boolean` | `false` | Animate characters in on first mount. |
+| `onComplete` | `() => void` | - | Fires when the last character finishes animating. |
+| `autoSize` | `boolean` | `true` | Animate the wrapper width to match content (uses `ResizeObserver`). |
+
+There is no `transition` prop - pass an `animation` preset instead:
+
+| Preset | Value |
+| --- | --- |
+| `default` | `{ duration: 0.38, ease: [0.19, 1, 0.22, 1] }` |
+| `smooth` | `{ type: "spring", duration: 0.4, bounce: 0 }` |
+| `snappy` | `{ type: "spring", duration: 0.35, bounce: 0.15 }` |
+| `bouncy` | `{ type: "spring", duration: 0.5, bounce: 0.3 }` |
+
+## Variants
+
+### `variant="text"` (default)
+
+Diffs old and new text with an LCS (longest common subsequence) over graphemes. Matched graphemes keep their identity and slide to their new position with Motion layout animation. New graphemes fade, blur and scale in; removed ones fade, blur and scale out. Drift and trend offsets scale with the fraction of the string that changed, so a one-letter edit barely moves while a full replacement sweeps.
+
+```tsx
+"use client";
+
+import { Calligraph } from "calligraph";
+import { useState } from "react";
+
+const states = ["Idle", "Uploading", "Processing", "Done"];
+
+export function Status() {
+  const [step, setStep] = useState(0);
+
+  return (
+    <Calligraph
+      as="h1"
+      animation="bouncy"
+      trend={1}
+      drift={{ x: 20, y: 8 }}
+      onClick={() => setStep((s) => (s + 1) % states.length)}
+    >
+      {states[step]}
+    </Calligraph>
+  );
+}
+```
+
+### `variant="number"`
+
+Digits roll vertically. Columns are aligned from the right, so `99` to `100` keeps the shared digits in place. Roll direction comes from the numeric comparison: up when the value increases, down when it decreases. Any non-digit prefix (currency symbol, sign) renders without per-character animation.
+
+```tsx
+"use client";
+
+import { Calligraph } from "calligraph";
+import { useState } from "react";
+
+const format = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
+}).format;
+
+export function Price() {
+  const [price, setPrice] = useState(35.99);
+
+  return (
+    <>
+      <Calligraph variant="number">{format(price)}</Calligraph>
+      <button onClick={() => setPrice((p) => p + 10)}>+10</button>
+    </>
+  );
+}
+```
+
+Pass an already-formatted string. Calligraph never formats numbers itself - use `Intl.NumberFormat` for currency, percentages, grouping and locales.
+
+### `variant="slots"`
+
+Slot-machine spin: each digit position renders a column of `0-9`, animates to the target digit, and is masked with a fade at the top and bottom edge. Good for counters and scores where the movement itself is the point.
+
+```tsx
+<Calligraph variant="slots" stagger={0.04}>
+  {String(score)}
+</Calligraph>
+```
+
+## Recipes
+
+Headings and custom elements - extra props land on the wrapper:
+
+```tsx
+<Calligraph as="h1" className="title" style={{ fontWeight: 600 }}>
+  {heading}
+</Calligraph>
+```
+
+Accessibility - the animated glyphs are `aria-hidden`, so name the wrapper whenever the text carries meaning:
+
+```tsx
+<Calligraph aria-label={text}>{text}</Calligraph>
+```
+
+Steady digits - tabular figures stop the width from jittering:
+
+```tsx
+<Calligraph variant="number" style={{ fontVariantNumeric: "tabular-nums" }}>
+  {value}
+</Calligraph>
+```
+
+Fixed-width layout - turn off the width animation when the parent already reserves space:
+
+```tsx
+<Calligraph autoSize={false}>{text}</Calligraph>
+```
+
+Chaining on completion:
+
+```tsx
+<Calligraph onComplete={() => setStep((s) => s + 1)}>{message}</Calligraph>
+```
+
+Typing the props:
+
+```tsx
+import type { CalligraphProps } from "calligraph";
+
+function Label(props: CalligraphProps) {
+  return <Calligraph animation="smooth" {...props} />;
+}
+```
+
+Live clock (any string source works):
+
+```tsx
+const [now, setNow] = useState(() => new Date().toLocaleTimeString());
+useEffect(() => {
+  const id = setInterval(() => setNow(new Date().toLocaleTimeString()), 1000);
+  return () => clearInterval(id);
+}, []);
+
+return <Calligraph variant="number">{now}</Calligraph>;
+```
+
+## Notes and constraints
+
+- Grapheme-aware: text is split with `Intl.Segmenter`, so emoji, flags and combining marks stay intact.
+- Reconciliation happens during render (no `useEffect`), so keys survive rapid successive updates.
+- `stagger` currently affects the `number` and `slots` variants; `text` animates all characters together.
+- The wrapper is `display: inline-flex` and `position: relative` by default; your `style` merges on top of that.
+- No `forwardRef` is declared. If you need a DOM ref, wrap Calligraph in your own element.
+- ESM only. `main` is `dist/index.js`, `types` is `dist/index.d.ts`.
+- Internals (`computeLCS`, key reconciliation, the renderer modules, the preset table) are not exported and are not a stable API.
+
+## Common mistakes
+
+- Passing a `transition` object - use `animation` instead. Unknown props are spread onto the DOM node and React will warn.
+- Passing JSX, an array, or `null` as `children` - only `string | number` is supported.
+- Forgetting that state driving the text has to live in a client component in the App Router.
+- Expecting number formatting - format with `Intl.NumberFormat` first.
+- Animating a value that changes every frame - throttle to something a human can read.

@@ -41,6 +41,7 @@ export const metadata: Metadata = {
   title: { default: title, template: `%s — ${title}` },
   description,
   metadataBase: new URL(url),
+  alternates: { types: { "text/markdown": "/index.md" } },
   openGraph: {
     title,
     description,
